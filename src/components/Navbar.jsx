@@ -15,7 +15,7 @@ export const Navbar = ({menuOpen, setMenuOpen}) => {
                     <img
                         src={rebirthLogo}
                         alt="TAR"
-                        className="h-12 w-12 object-cover"
+                        className="h-25 w-25 object-cover"
                     />
                 </a>
 
