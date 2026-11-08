@@ -10,11 +10,20 @@ export const Contact = () => {
     });
     const [status, setStatus] = useState('idle');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setStatus('sending');
 
+        const { VITE_SERVICE_ID, VITE_TEMPLATE_ID, VITE_PUBLIC_KEY } = import.meta.env;
+        if (!VITE_SERVICE_ID || !VITE_TEMPLATE_ID || !VITE_PUBLIC_KEY) {
+            console.error('EmailJS is not configured. Set VITE_SERVICE_ID, VITE_TEMPLATE_ID, and VITE_PUBLIC_KEY before building.');
+            setStatus('error');
+            return;
+        }
+
+        setStatus('sending');
         const templateParams = {
+            name: formData.name,
+            email: formData.email,
             from_name: formData.name,
             from_email: formData.email,
             message: formData.message,
@@ -23,21 +32,15 @@ export const Contact = () => {
             reply_to: formData.email,
         };
 
-        emailjs
-            .send(
-                import.meta.env.VITE_SERVICE_ID,
-                import.meta.env.VITE_TEMPLATE_ID,
-                templateParams,
-                import.meta.env.VITE_PUBLIC_KEY
-            )
-            .then(() => {
-                setFormData({ name: '', email: '', message: '' });
-                setStatus('success');
-                window.setTimeout(() => setStatus('idle'), 4000);
-            })
-            .catch(() => {
-                setStatus('error');
-            });
+        try {
+            await emailjs.send(VITE_SERVICE_ID, VITE_TEMPLATE_ID, templateParams, VITE_PUBLIC_KEY);
+            setFormData({ name: '', email: '', message: '' });
+            setStatus('success');
+            window.setTimeout(() => setStatus('idle'), 4000);
+        } catch (error) {
+            console.error('EmailJS failed to send the contact message:', error);
+            setStatus('error');
+        }
     };
 
     return (
@@ -98,10 +101,12 @@ export const Contact = () => {
                         </div>
 
                         {status === 'success' && (
-                            <p className="text-sm text-emerald-400">Message sent — thank you!</p>
+                            <p role="status" className="text-sm text-emerald-400">Message sent — thank you!</p>
                         )}
                         {status === 'error' && (
-                            <p className="text-sm text-rose-400">Submission failed. Please try again.</p>
+                            <p role="alert" className="text-sm text-rose-400">
+                                Message could not be sent. Please try again later.
+                            </p>
                         )}
 
                         <button
